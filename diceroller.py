@@ -3,7 +3,7 @@ from satoshidice import SatoshiDiceApi
 
 class DiceRoller:
     """
-    DiceRoller - bot logic.
+    DiceRoller bot skeleton.
     """
 
     def __init__(self, secret):

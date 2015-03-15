@@ -8,23 +8,39 @@ class SatoshiDiceApi:
     """
 
     def __init__(self, secret):
+        """
+        Initialization
+        Secret required to use the API. (it's shown in the address bar on satoshidice.com).
+        """
         self.secret = secret
         self.api_base_url = "https://session.satoshidice.com/"
         self.next_round = {}
 
     def user_recent_rolls(self):
+        """
+        Function returns user recent rolls
+        """
         response = urllib.urlopen(self.api_base_url + "globalstats/recentrolls/" + self.secret)
         return json.load(response)
 
     def balance(self):
+        """
+        Function returns current user balance.
+        """
         response = urllib.urlopen(self.api_base_url + "userapi/userbalance/?secret=" + self.secret)
         return json.load(response)
 
     def start_round(self):
+        """
+        Starts new round. To place a bet you have to start new round.
+        """
         response = urllib.urlopen(self.api_base_url + "userapi/startround.php?secret=" + self.secret)
         self.next_round = json.load(response)
 
     def place_bet(self, bet_in_satoshis, below_roll_to_win, client_roll):
+        """
+        Place new bet.
+        """
         # max/min allowed lucky numbers
         min_roll = 1
         max_roll = 64225
