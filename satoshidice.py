@@ -33,11 +33,12 @@ class SatoshiDiceApi:
     def start_round(self):
         """
         Starts new round. To place a bet you have to start new round.
+        You don't have to call this function unless you have to, place_bet() will always handle round start for you.
         """
         response = urllib.urlopen(self.api_base_url + "userapi/startround.php?secret=" + self.secret)
         self.next_round = json.load(response)
 
-    def place_bet(self, bet_in_satoshis, below_roll_to_win, client_roll):
+    def place_bet(self, bet_in_satoshis, below_roll_to_win, client_roll=0):
         """
         Place new bet.
         """
