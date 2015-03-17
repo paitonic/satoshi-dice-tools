@@ -4,10 +4,12 @@ import dicesimulator
 starting_balance = 0.00010000
 max_balance = starting_balance
 balance = starting_balance
-bet_amount = 0.00000100
-less_then_target = 230 # max target = 64225
+bet_amount = 0.00001000
+less_then_target = 45000 # max target = 64225
 
 round_id = 0
+rounds_won = 0
+rounds_lost = 0
 
 # while our balance is positive, let's roll!
 while (balance - bet_amount > 0):
@@ -32,16 +34,12 @@ while (balance - bet_amount > 0):
     # profit or loss amount
     profit = dicesimulator.profit(bet_amount, less_then_target, dice)
 
-    # print some info after each roll
-    print "round={round} dice={dice:<5} bet={bet:.8f} profit={profit:+.8f} chance={win:.3f}% payout=x{payout:.5f} balance={balance:.8f}".format(
-    round=round_id,
-    dice=dice,
-    target=less_then_target,
-    profit=profit,
-    bet=bet_amount,
-    balance=balance,
-    win=dicesimulator.probability(less_then_target),
-    payout=dicesimulator.payout_multiplier(less_then_target)
-    )
+    if profit > 0:
+        rounds_won += 1
+    else:
+        rounds_lost += 1
 
-print "starting_balance={starting_balance:.8f} max_balance={max_balance:.8f}".format(starting_balance=starting_balance, max_balance=max_balance)
+    # print some info after each roll
+    dicesimulator.round_stats(round_id=round_id, dice=dice, target=less_then_target, profit=profit, bet_amount=bet_amount, balance=balance)
+
+dicesimulator.overall_stats(starting_balance=starting_balance, max_balance=max_balance, rounds_won=rounds_won, rounds_lost=rounds_lost)

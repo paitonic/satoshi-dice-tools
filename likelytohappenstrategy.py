@@ -16,6 +16,8 @@ balance = starting_balance
 bet_amount = 0.00010000
 past_roll_results = [] # 1 win, 0 loss
 
+rounds_won = 0
+rounds_lost = 0
 round_id = 0
 while (balance - bet_amount > 0):
     # are we got 3 losses streak?
@@ -46,19 +48,11 @@ while (balance - bet_amount > 0):
 
     if profit > 0:
         past_roll_results.append(1)
+        rounds_won += 1
     else:
         past_roll_results.append(0)
+        rounds_lost += 1
 
-    print "round={round} dice={dice:<5} bet={bet:.8f} profit={profit:+.8f} chance={win:.3f}% payout=x{payout:.5f} balance={balance:.8f}".format(
-    round=round_id,
-    dice=dice,
-    target=less_then_target,
-    profit=profit,
-    bet=bet_amount,
-    balance=balance,
-    win=dicesimulator.probability(less_then_target),
-    payout=dicesimulator.payout_multiplier(less_then_target)
-    )
+    dicesimulator.round_stats(round_id=round_id, dice=dice, target=less_then_target, profit=profit, bet_amount=bet_amount, balance=balance)
 
-
-print "starting_balance={starting_balance:.8f} max_balance={max_balance:.8f}".format(starting_balance=starting_balance, max_balance=max_balance)
+dicesimulator.overall_stats(starting_balance=starting_balance, max_balance=max_balance, rounds_won=rounds_won, rounds_lost=rounds_lost)
