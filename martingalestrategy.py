@@ -30,12 +30,6 @@ while ((balance - bet_amount) > 0):
     # profit/loss made
     profit = dicesimulator.profit(bet_amount, less_then_target, dice)
 
-    # if bet lost, double bet amount
-    if (profit < 0):
-        bet_amount = bet_amount * 2
-    else:
-        bet_amount = initial_bet_amount
-
     print "round={round} dice={dice:<5} bet={bet:.8f} profit={profit:+.8f} chance={win:.3f}% payout=x{payout:.5f} balance={balance:.8f}".format(
     round=round_id,
     dice=dice,
@@ -46,6 +40,12 @@ while ((balance - bet_amount) > 0):
     win=dicesimulator.probability(less_then_target),
     payout=dicesimulator.payout_multiplier(less_then_target)
     )
+
+    # if bet lost, double bet amount
+    if (profit < 0):
+        bet_amount = bet_amount * 2
+    else:
+        bet_amount = initial_bet_amount
 
 
 print "starting_balance={starting_balance:.8f} max_balance={max_balance:.8f}".format(starting_balance=starting_balance, max_balance=max_balance)
