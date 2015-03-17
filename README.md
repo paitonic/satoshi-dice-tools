@@ -67,28 +67,66 @@ bet = api.place_bet(1000, 62000)
 
 ```
 
-##### Utility Functions for Strategy Testing
-```dicesimulator.py``` includes several utility functions for testing your strategies locally without wasting even one satoshi!
+#### DiceSimulator for Strategy Testing
+```DiceSimulator``` class contains several utility methods for testing your strategies locally without wasting even one satoshi!
 
-For "rolling the dice" I used ```random.randint()``` instead of implementing the actual algorithm behind (I know, lazy me).
+
+##### Writing strategy
+First of all we have to import ```dicesimulator```
+
+```python
+import dicesimulator
+```
+
+Now let's implement [Martingale](http://en.wikipedia.org/wiki/Martingale_%28betting_system%29).
+
+Every strategy should inherit ```dicesimulator.DiceSimulator``` class and implement ```strategy()``` method which expects ```previous_bet``` object that contains your result of previous bet, you can use this object if your strategy needs access to previous bet results each round.
+
+```python
+class Martingale(dicesimulator.DiceSimulator):
+    def strategy(self, previous_bet):
+      if previous_bet and previous_bet['profit'] < 0:
+          # if previous bet was a loss then double bet amount
+          self.bet_amount = previous_bet['bet_amount'] * 2
+      else:
+          # else set initial amount
+          self.bet_amount = self.initial_bet_amount
+```
+```DiceSimulator``` class have number of properties you can change or read.
+For example, to change bet amount simply assign new bet to ```self.bet_amount``` property, if you want access to initial bet amount then there is ```self.initial_bet_amount```, same thing for less_then and balance properties.
+
+Almost done, lets create object with initial configuration
+```python
+martingale = Martingale(balance=0.001, bet_amount=0.00001, less_then=32768)
+```
+
+Finally, call objects ```.run()``` method to begin the simulation loop, in each iteration ```strategy()``` function will be called to "handle" the round/roll.
+Simulation will run until your all of your balance is lost :).
+```python
+martingale.run()
+```
+
+> **Note:**
+for "rolling the dice", ```random.randint()``` was used instead of implementing the actual algorithm behind (I know, lazy me).
+
+Here's how output looks like:
+
+```
+$ python martingalestrategy.py
+
+round=1374 dice=11726 less_then=5657  bet=0.00000100 profit=-0.00000100 chance=8.632% payout=x11.36483 balance=0.00000160
+round=1375 dice=51523 less_then=7240  bet=0.00000100 profit=-0.00000100 chance=11.047% payout=x8.87995 balance=0.00000060
+round=1376 dice=53891 less_then=12293 bet=0.00000100 profit=-0.00000100 chance=18.758% payout=x5.22987 balance=-0.00000040
+initial_balance=0.00010000 max_balance=0.00010425/104.25% rounds_won=665/48.33% rounds_lost=711/51.67%
+```
+
+###### Example of Strategies
+You can find some examples of genius (oh, yes!) strategies (look for ```*strategy.py``` files).
+None of those strategies are profitable and they were made for fun just like this entire project :).
 
 ##### Bot Skeleton
 ```diceroller.py``` includes just a template for bot, nothing special.
 
-##### Example of Strategies
-Also, you can find few strategies (```*strategy.py``` files) I have implemented as an examples.
-I warn you, none of those strategies are profitable and they were made for fun.
 
-Output:
-
-```
-$ python flatbetstrategy.py
-
-round=1 dice=34931 bet=0.00000100 profit=-0.00000100 chance=0.351% payout=x279.52529 balance=0.00009900
-round=2 dice=58276 bet=0.00000100 profit=-0.00000100 chance=0.351% payout=x279.52529 balance=0.00009800
-round=3 dice=10740 bet=0.00000100 profit=-0.00000100 chance=0.351% payout=x279.52529 balance=0.00009700
-round=4 dice=62963 bet=0.00000100 profit=-0.00000100 chance=0.351% payout=x279.52529 balance=0.00009600
-round=5 dice=56967 bet=0.00000100 profit=-0.00000100 chance=0.351% payout=x279.52529 balance=0.00009500
-```
 
 By the way, I'm not responsible for your losses or profits :).
