@@ -1,10 +1,10 @@
 import dicesimulator
 
 # configuration
-starting_balance = 0.00010000
-initial_bet_amount = 0.00000100
+starting_balance = 0.00100000
+initial_bet_amount = 0.00010000
 bet_amount = initial_bet_amount
-less_then_target = 34078 # max target = 64225
+less_then_target = 55705 # max target = 64225
 
 # for statistic puproses
 max_balance = starting_balance
