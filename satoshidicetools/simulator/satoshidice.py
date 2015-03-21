@@ -7,6 +7,7 @@ HOUSE_EDGE = 1.9
 class Simulator:
     def __init__(self, balance, bet_amount=0.1, less_then=1):
         self.initial_balance = self.max_balance = self.balance = self.cumulative_balance = balance
+        self.balance_over_time = [self.initial_balance]
         self.initial_bet_amount = self.bet_amount = bet_amount
         self.initial_less_then = self.less_then = less_then
         self.custom_round_output_string = ''
@@ -19,6 +20,7 @@ class Simulator:
         self.bet_amount = self.initial_bet_amount
         self.less_then = self.initial_less_then
         self.custom_round_output_string = ''
+        self.balance_over_time = []
 
     def roll(self):
         """
@@ -98,7 +100,7 @@ class Simulator:
         """
         self.custom_round_output_string = output
 
-    def strategy_init(self):
+    def on_strategy_start(self):
         """
         Strategy initialization method (optional), use this method to initialize properties
         that should be accessable between rounds.
@@ -129,7 +131,7 @@ class Simulator:
         """
         # iteration
         for iteration in xrange(0, iterations):
-            self.strategy_init()
+            self.on_strategy_start()
             previous_bet = None
             rounds_won = rounds_lost = 0
             round_id = 0
@@ -146,10 +148,18 @@ class Simulator:
                 if self.is_strategy_stop():
                     break
 
+                # bet amount can't be higher than balance
+                # we'll use all available balance as the bet
+                if self.bet_amount > self.balance:
+                    self.bet_amount = self.balance
+
                 self.balance -= self.bet_amount
                 outcome = self.payout(self.bet_amount, self.less_then, dice)
                 self.balance += outcome
                 self.cumulative_balance += self.balance
+
+                # record balance status after each round
+                self.balance_over_time.append(self.balance)
 
                 # keep track of highest balance ever
                 if self.balance > self.max_balance:
@@ -176,3 +186,23 @@ class Simulator:
 
             # reset configuration to initial state after each iteration
             self.reset_state()
+
+    def plot(self):
+        # matplotlib is required for plotting
+        is_matplotlib_installed = False
+        try:
+            import matplotlib.pyplot as matplot
+            is_matplotlib_installed = True
+        except:
+            is_matplotlib_installed = False
+
+        if not is_matplotlib_installed:
+            return
+
+        matplot.plot(self.balance_over_time)
+        matplot.axhline(y=self.initial_balance, label='initial balance', color='r')
+        matplot.title('Simulation')
+        matplot.ylabel('balance')
+        matplot.xlabel('round')
+        matplot.legend()
+        matplot.show()

@@ -9,7 +9,7 @@ we increase bet amount.
 """
 
 class LikelyToHappen(satoshidice.Simulator):
-    def strategy_init(self):
+    def on_strategy_start(self):
         # 0 - lost, 1 - won
         self.previous_outcomes = []
 
@@ -29,6 +29,9 @@ class LikelyToHappen(satoshidice.Simulator):
             self.bet_amount = self.balance
         else:
             self.bet_amount = self.initial_bet_amount
+
+    def on_strategy_end(self):
+        self.plot()
 
 likely_to_happen = LikelyToHappen(balance=0.001, bet_amount=0.0001, less_then=49152)
 likely_to_happen.run()
