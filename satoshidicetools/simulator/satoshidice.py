@@ -10,7 +10,7 @@ class Simulator:
         self.balance_over_time = [self.initial_balance]
         self.initial_bet_amount = self.bet_amount = bet_amount
         self.initial_less_then = self.less_then = less_then
-        self.custom_round_output_string = ''
+        self.custom_overall_output_string = self.custom_round_output_string = ''
 
     def reset_state(self):
         """
@@ -19,8 +19,8 @@ class Simulator:
         self.max_balance = self.balance = self.cumulative_balance = self.initial_balance
         self.bet_amount = self.initial_bet_amount
         self.less_then = self.initial_less_then
-        self.custom_round_output_string = ''
-        self.balance_over_time = []
+        self.custom_overall_output_string = self.custom_round_output_string = ''
+        self.balance_over_time = [self.initial_balance]
 
     def roll(self):
         """
@@ -60,7 +60,7 @@ class Simulator:
         else:
             return -bet_amount
 
-    def round_stats(self, round_id, bet_amount, less_then, dice, profit, custom_stat=''):
+    def round_stats(self, round_id, bet_amount, less_then, dice, profit):
         """
         Stats after one round is finished.
         """
@@ -83,8 +83,7 @@ class Simulator:
         rounds_won_percent = rounds_won / float(rounds_won + rounds_lost) * 100
         rounds_lost_percent = rounds_lost / float(rounds_won + rounds_lost) * 100
         avg_balance = self.cumulative_balance /  (rounds_won + rounds_lost)
-
-        print "initial_balance={initial_balance:.8f} max_balance={max_balance:.8f}/{max_balance_percent:.2f}% avg_balance={avg_balance:.8f} rounds_won={rounds_won}/{rounds_won_percentage:.2f}% rounds_lost={rounds_lost}/{rounds_lost_percentage:.2f}%".format(
+        print "initial_balance={initial_balance:.8f} max_balance={max_balance:.8f}/{max_balance_percent:.2f}% avg_balance={avg_balance:.8f} rounds_won={rounds_won}/{rounds_won_percentage:.2f}% rounds_lost={rounds_lost}/{rounds_lost_percentage:.2f}% {custom_stat}".format(
             initial_balance=self.initial_balance,
             max_balance=self.max_balance,
             rounds_won=rounds_won,
@@ -92,13 +91,20 @@ class Simulator:
             max_balance_percent=max_balance_percent,
             rounds_won_percentage=rounds_won_percent,
             rounds_lost_percentage=rounds_lost_percent,
-            avg_balance=avg_balance)
+            avg_balance=avg_balance,
+            custom_stat=self.custom_overall_output_string)
 
     def add_to_round_output(self, output):
         """
         Add additional string of output after each round is complete.
         """
         self.custom_round_output_string = output
+
+    def add_to_overall_output(self, output):
+        """
+        Add additional string of output after all rounds are completed.
+        """
+        self.custom_overall_output_string = output
 
     def on_strategy_start(self):
         """
@@ -181,14 +187,17 @@ class Simulator:
 
                 self.round_stats(round_id, self.bet_amount, self.less_then, dice, profit)
 
-            self.overall_stats(rounds_won, rounds_lost)
             self.on_strategy_end()
+            self.overall_stats(rounds_won, rounds_lost)
 
             # reset configuration to initial state after each iteration
             self.reset_state()
 
-    def plot(self):
-        # matplotlib is required for plotting
+    def plot(self, save_to_file=None):
+        """
+        Show plot using matplotlib if installed.
+        """
+
         is_matplotlib_installed = False
         try:
             import matplotlib.pyplot as matplot
@@ -205,4 +214,7 @@ class Simulator:
         matplot.ylabel('balance')
         matplot.xlabel('round')
         matplot.legend()
-        matplot.show()
+        if save_to_file:
+            matplot.savefig(save_to_file)
+        else:
+            matplot.show()
