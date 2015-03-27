@@ -155,7 +155,6 @@ class Simulator(object):
             previous_bet = None
             rounds_won = rounds_lost = 0
             round_id = 0
-
             # round
             while (self.balance > 0):
                 round_id += 1
@@ -166,12 +165,12 @@ class Simulator(object):
                 # run strategy
                 self.strategy(previous_bet)
 
-                # check if strategy stop condition is met
-                if self.stop_strategy_if():
+                # insufficient funds
+                if (self.balance - self._bet_amount) < 0:
                     break
 
-                # insufficient funds
-                if (self.balance - self._bet_amount) < MINIMUM_BET_AMOUNT:
+                # check if strategy stop condition is met
+                if self.stop_strategy_if():
                     break
 
                 self.balance -= self._bet_amount
