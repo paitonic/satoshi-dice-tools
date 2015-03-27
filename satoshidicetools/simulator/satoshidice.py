@@ -23,13 +23,14 @@ class Simulator(object):
         # there is minimum bet amount
         if bet < MINIMUM_BET_AMOUNT:
             raise Exception('minimum allowed bet is {min_bet:.8f}, your bet was {bet:.8f}.'.format(min_bet=MINIMUM_BET_AMOUNT, bet=bet))
+        self._bet_amount = bet
 
     def reset_state(self):
         """
         Set initial values.
         """
         self.max_balance = self.balance = self.cumulative_balance = self.initial_balance
-        self.bet_amount = self.initial_bet_amount
+        self._bet_amount = self.initial_bet_amount
         self.less_then = self.initial_less_then
         self.custom_overall_output_string = self.custom_round_output_string = ''
         self.balance_over_time = [self.initial_balance]
@@ -165,13 +166,12 @@ class Simulator(object):
                 # run strategy
                 self.strategy(previous_bet)
 
-                # bet amount can't be higher than balance
-                # we'll use all available balance
-                if self._bet_amount > self.balance:
-                    self._bet_amount = self.balance
-
                 # check if strategy stop condition is met
                 if self.stop_strategy_if():
+                    break
+
+                # insufficient funds
+                if (self.balance - self._bet_amount) < MINIMUM_BET_AMOUNT:
                     break
 
                 self.balance -= self._bet_amount
