@@ -1,19 +1,46 @@
 # satoshi-dice-roller
-Utility for interacting with satoshidice.com API, strategy simulator and example of few strategies.
+Utility for interacting with satoshidice.com API and strategy simulator.
+
+
+##### Package tree
+```
+satoshidicetools
+├── api
+│   ├── examples
+│   │   └── diceroller.py
+│   ├── __init__.py
+│   ├── satoshidice.py
+├── __init__.py
+└── simulator
+    ├── examples
+    │   ├── antimartingale.py
+    │   ├── average.py
+    │   ├── doubler.py
+    │   ├── flatbet.py
+    │   ├── flat_tp_sl.py
+    │   ├── lessthen_multiply.py
+    │   ├── likelytohappen.py
+    │   ├── martingale.py
+    │   ├── minbalance.py
+    │   ├── mix_less_then.py
+    │   └── randomizer.py
+    ├── __init__.py
+    ├── satoshidice.py
+```
 
 ##### API
 ```satoshidice.py``` supports very basic API functionality.
 
 ```python
-from satoshidice import SatoshiDiceApi
-api = SatoshiDiceApi(secret="SECRET_HASH")
+from satoshidicetools.api import satoshidice
+api = satoshidice.Api(secret="SECRET_HASH")
 ```
 
 Balance:
 ```python
 api.balance()
 ```
-```json
+```python
 {u'balanceInSatoshis': 1000001,
  u'hash': u'hash',
  u'maxProfitInSatoshis': 583281011,
@@ -26,7 +53,8 @@ Let's place new bet for 1000 satoshi (0.00001000 BTC) and target of 62,000:
 ```python
 bet = api.place_bet(1000, 62000)
 ```
-```
+
+```python
 {u'bet': {u'betID': 00000000,
   u'betInSatoshis': 1000,
   u'betTX': None,
@@ -67,43 +95,72 @@ bet = api.place_bet(1000, 62000)
 
 ```
 
-#### DiceSimulator for Strategy Testing
-```DiceSimulator``` class contains several utility methods for testing your strategies locally without wasting even one satoshi!
+#### Simulator
+```Simulator``` class contains several utility methods for testing your strategies locally without wasting even one satoshi!
 
+Let's implement [Martingale](http://en.wikipedia.org/wiki/Martingale_%28betting_system%29).
 
-##### Writing strategy
-First of all we have to import ```dicesimulator```
-
-```python
-import dicesimulator
-```
-
-Now let's implement [Martingale](http://en.wikipedia.org/wiki/Martingale_%28betting_system%29).
-
-Every strategy should inherit ```dicesimulator.DiceSimulator``` class and implement ```strategy()``` method which expects ```previous_bet``` object that contains your result of previous bet, you can use this object if your strategy needs access to previous bet results each round.
+Every strategy should inherit ```satoshidice.Simulator``` class and implement ```self.strategy()``` method which expects ```previous_bet``` dictionary that contains your result of previous bet, you can use this object if your strategy needs access to previous bet result each round.
 
 ```python
+from satoshidicetools.simulator import satoshidice
+
 class Martingale(dicesimulator.DiceSimulator):
+
+    def on_strategy_start(self):
+      """
+      Do something before strategy is started running.
+      """
+      pass
+
+    def stop_strategy_if(self):
+      """
+      End strategy running on some condition
+      """
+      pass
+
     def strategy(self, previous_bet):
+      """
+      Logic goes here.
+      """
       if previous_bet and previous_bet['profit'] < 0:
           # if previous bet was a loss then double bet amount
           self.bet_amount = previous_bet['bet_amount'] * 2
       else:
           # else set initial amount
           self.bet_amount = self.initial_bet_amount
+
+    def on_strategy_end(self):
+      """
+      do something when strategy finished running.
+      """
+      # lets our balance
+      self.plot()
 ```
-```DiceSimulator``` class have number of properties you can change or read.
-For example, to change bet amount simply assign new bet to ```self.bet_amount``` property, if you want access to initial bet amount then there is ```self.initial_bet_amount```, same thing for less_then and balance properties.
+
+To change bet amount, simply assign new amount to ```self.bet_amount```, if you want access to initial bet amount then you can use ```self.initial_bet_amount```.
+
+##### Additional properties:
+  - ```self.max_balance``` - always contains the highest balance you were able to achieve.
+  - ```self.initial_balance``` - initial balance
+  - ```self.balance``` - current balance
+  - ```self.initial_less_then``` - intial 'less then' value
+  - ```self.less_then``` - current 'less then' value, can be changed.
 
 Almost done, lets create object with initial configuration
 ```python
 martingale = Martingale(balance=0.001, bet_amount=0.00001, less_then=32768)
 ```
 
-Finally, call objects ```.run()``` method to begin the simulation loop, in each iteration ```strategy()``` function will be called to "handle" the round/roll.
-Simulation will run until your all of your balance is lost :).
+Finally, call ```self.run()``` method to begin the simulation loop, in each iteration ```strategy()``` function will be called to "handle" the round/roll.
+Simulation will run until your all of your balance is lost or when ```self.stop_strategy_if``` is returned ```True```.
 ```python
 martingale.run()
+```
+
+In addition, you can specifiy if you want more than one iteration by passing ```iteration``` parameter to ```self.run()```.
+```python
+martingale.run(iterations=100)
 ```
 
 > **Note:**
@@ -113,20 +170,21 @@ Here's how output looks like:
 
 ```
 $ python martingalestrategy.py
-
-round=1374 dice=11726 less_then=5657  bet=0.00000100 profit=-0.00000100 chance=8.632% payout=x11.36483 balance=0.00000160
-round=1375 dice=51523 less_then=7240  bet=0.00000100 profit=-0.00000100 chance=11.047% payout=x8.87995 balance=0.00000060
-round=1376 dice=53891 less_then=12293 bet=0.00000100 profit=-0.00000100 chance=18.758% payout=x5.22987 balance=-0.00000040
-initial_balance=0.00010000 max_balance=0.00010425/104.25% rounds_won=665/48.33% rounds_lost=711/51.67%
+...
+round=50 dice=64294 less_then=32112 bet=0.00008000 profit=-0.00008000 chance=48.999% payout=x2.00208 balance=0.00110158
+round=51 dice=47772 less_then=32112 bet=0.00016000 profit=-0.00016000 chance=48.999% payout=x2.00208 balance=0.00094158
+round=52 dice=46427 less_then=32112 bet=0.00032000 profit=-0.00032000 chance=48.999% payout=x2.00208 balance=0.00062158
+initial_balance=0.00100000 balance=0.00062158 max_balance=0.00125158/125.16% avg_balance=0.00111207 rounds_won=25/48.08% rounds_lost=27/51.92%
 ```
 
-###### Example of Strategies
-You can find some examples of genius (oh, yes!) strategies (look for ```*strategy.py``` files).
-None of those strategies are profitable and they were made for fun just like this entire project :).
+Plot, red line is initial balance, the blue one is balance over time (after each roll/round is completed).
 
-##### Bot Skeleton
-```diceroller.py``` includes just a template for bot, nothing special.
-
+[![](http://i57.tinypic.com/2vi2ttu.png)](http://i57.tinypic.com/2vi2ttu.png)
+> **Note:**
+matplotlib is required for plotting.
 
 
+You can find some examples of genius (oh yes!) strategies in ```satoshidicetools/simulator/examples``` directory.
+
+None of those strategies are profitable and they were made for fun just like this entire project.
 By the way, I'm not responsible for your losses or profits :).

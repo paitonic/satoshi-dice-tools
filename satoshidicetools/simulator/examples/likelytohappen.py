@@ -4,8 +4,8 @@ from satoshidicetools.simulator import satoshidice
 http://vegasclick.com/gambling/fallacy.html
 http://en.wikipedia.org/wiki/Gambler%27s_fallacy
 
-In this strategy, we doing flat betting until we hit loss of 3 streak, once we got loss streak
-we increase bet amount.
+In this strategy, we doing flat betting until we hit 3 streak loss, once we got loss streak
+we increase bet amount because we suspect that we will next roll.
 """
 
 class LikelyToHappen(satoshidice.Simulator):
