@@ -6,13 +6,23 @@ MIN_ROLL_TARGET = 1
 HOUSE_EDGE = 1.9
 MINIMUM_BET_AMOUNT = 1e-6
 
-class Simulator:
+class Simulator(object):
     def __init__(self, balance, bet_amount=0.1, less_then=1):
         self.initial_balance = self.max_balance = self.balance = self.cumulative_balance = balance
         self.balance_over_time = [self.initial_balance]
-        self.initial_bet_amount = self.bet_amount = bet_amount
+        self.initial_bet_amount = self._bet_amount = bet_amount
         self.initial_less_then = self.less_then = less_then
         self.custom_overall_output_string = self.custom_round_output_string = ''
+
+    @property
+    def bet_amount(self):
+        return self._bet_amount
+
+    @bet_amount.setter
+    def bet_amount(self, bet):
+        # there is minimum bet amount
+        if bet < MINIMUM_BET_AMOUNT:
+            raise Exception('minimum allowed bet is {min_bet:.8f}, your bet was {bet:.8f}.'.format(min_bet=MINIMUM_BET_AMOUNT, bet=bet))
 
     def reset_state(self):
         """
@@ -122,7 +132,7 @@ class Simulator:
         """
         pass
 
-    def is_strategy_stop(self):
+    def stop_strategy_if(self):
         """
         Stop condition, this methods is called after self.strategy(), if your strategy has a termination condition - implement this method.
         """
@@ -148,26 +158,24 @@ class Simulator:
             # round
             while (self.balance > 0):
                 round_id += 1
+
+                # roll the dice
                 dice = self.roll()
 
                 # run strategy
                 self.strategy(previous_bet)
 
-                # check if strategy stop condition is met
-                if self.is_strategy_stop():
-                    break
-
-                # check for minimum bet amount
-                if self.bet_amount < MINIMUM_BET_AMOUNT:
-                    break
-
                 # bet amount can't be higher than balance
-                # we'll use all available balance as the bet
-                if self.bet_amount > self.balance:
-                    self.bet_amount = self.balance
+                # we'll use all available balance
+                if self._bet_amount > self.balance:
+                    self._bet_amount = self.balance
 
-                self.balance -= self.bet_amount
-                outcome = self.payout(self.bet_amount, self.less_then, dice)
+                # check if strategy stop condition is met
+                if self.stop_strategy_if():
+                    break
+
+                self.balance -= self._bet_amount
+                outcome = self.payout(self._bet_amount, self.less_then, dice)
                 self.balance += outcome
                 self.cumulative_balance += self.balance
 
@@ -178,8 +186,8 @@ class Simulator:
                 if self.balance > self.max_balance:
                     self.max_balance = self.balance
 
-                profit = self.calculate_profit(self.bet_amount, self.less_then, dice)
-                previous_bet = {'profit': profit, 'bet_amount': self.bet_amount, 'less_then': self.less_then, 'dice': dice, 'payout': outcome}
+                profit = self.calculate_profit(self._bet_amount, self.less_then, dice)
+                previous_bet = {'profit': profit, 'bet_amount': self._bet_amount, 'less_then': self.less_then, 'dice': dice, 'payout': outcome}
 
                 # rounds won vs lost
                 if profit > 0:
@@ -192,7 +200,7 @@ class Simulator:
                 if iterations > 1:
                     continue
 
-                self.round_stats(round_id, self.bet_amount, self.less_then, dice, profit)
+                self.round_stats(round_id, self._bet_amount, self.less_then, dice, profit)
 
             self.on_strategy_end()
             self.overall_stats(rounds_won, rounds_lost)
