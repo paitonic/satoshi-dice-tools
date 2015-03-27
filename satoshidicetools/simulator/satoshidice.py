@@ -2,7 +2,9 @@ import random
 
 MAX_ROLL = 65535 # maximum roll
 MAX_ROLL_TARGET = 64225 # max target
+MIN_ROLL_TARGET = 1
 HOUSE_EDGE = 1.9
+MINIMUM_BET_AMOUNT = 1e-6
 
 class Simulator:
     def __init__(self, balance, bet_amount=0.1, less_then=1):
@@ -83,7 +85,7 @@ class Simulator:
         rounds_won_percent = rounds_won / float(rounds_won + rounds_lost) * 100
         rounds_lost_percent = rounds_lost / float(rounds_won + rounds_lost) * 100
         avg_balance = self.cumulative_balance /  (rounds_won + rounds_lost)
-        print "initial_balance={initial_balance:.8f} max_balance={max_balance:.8f}/{max_balance_percent:.2f}% avg_balance={avg_balance:.8f} rounds_won={rounds_won}/{rounds_won_percentage:.2f}% rounds_lost={rounds_lost}/{rounds_lost_percentage:.2f}% {custom_stat}".format(
+        print "initial_balance={initial_balance:.8f} balance={balance:.8f} max_balance={max_balance:.8f}/{max_balance_percent:.2f}% avg_balance={avg_balance:.8f} rounds_won={rounds_won}/{rounds_won_percentage:.2f}% rounds_lost={rounds_lost}/{rounds_lost_percentage:.2f}% {custom_stat}".format(
             initial_balance=self.initial_balance,
             max_balance=self.max_balance,
             rounds_won=rounds_won,
@@ -92,6 +94,7 @@ class Simulator:
             rounds_won_percentage=rounds_won_percent,
             rounds_lost_percentage=rounds_lost_percent,
             avg_balance=avg_balance,
+            balance=self.balance,
             custom_stat=self.custom_overall_output_string)
 
     def add_to_round_output(self, output):
@@ -152,6 +155,10 @@ class Simulator:
 
                 # check if strategy stop condition is met
                 if self.is_strategy_stop():
+                    break
+
+                # check for minimum bet amount
+                if self.bet_amount < MINIMUM_BET_AMOUNT:
                     break
 
                 # bet amount can't be higher than balance
